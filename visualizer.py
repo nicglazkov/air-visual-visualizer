@@ -25,4 +25,4 @@ print(temp_file.getvalue())
 conn.close()
 
 # with open('pysmb.py', 'rb') as file:
-#     conn.storeFile('remotefolder', 'pysmb.py', file)
+#    conn.storeFile('remotefolder', 'pysmb.py', file)
