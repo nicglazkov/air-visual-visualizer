@@ -1,28 +1,50 @@
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 from smb.SMBConnection import SMBConnection
 
+hostName = "localhost"
+serverPort = 8080
+
 userID = 'airvisual'
-password = 'rr4twmgm'
+password = ''
 client_machine_name = 'localhost'
 
 server_name = 'AirVisual'
-server_ip = '192.168.156.225'
+server_ip = ''
 
 domain_name = ''
 
-conn = SMBConnection(userID, password, client_machine_name, server_name, domain=domain_name, use_ntlm_v2=True,
-                     is_direct_tcp=True)
 
-conn.connect(server_ip, 445)
+class MyServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "application/json; charset=UTF-8")
+        self.end_headers()
 
-temp_file = BytesIO()
+        conn = SMBConnection(userID, password, client_machine_name, server_name, domain=domain_name, use_ntlm_v2=True,
+                             is_direct_tcp=True)
 
-conn.retrieveFile('airvisual', 'latest_config_measurements.json', temp_file)
+        conn.connect(server_ip, 445)
 
-print(temp_file.getvalue())
+        temp_file = BytesIO()
+
+        conn.retrieveFile(
+            'airvisual', 'latest_config_measurements.json', temp_file)
+
+        self.wfile.write(temp_file.getvalue())
+
+        conn.close()
 
 
-conn.close()
+if __name__ == "__main__":
 
-# with open('pysmb.py', 'rb') as file:
-#    conn.storeFile('remotefolder', 'pysmb.py', file)
+    webServer = HTTPServer((hostName, serverPort), MyServer)
+    print("Server started http://%s:%s" % (hostName, serverPort))
+
+    try:
+        webServer.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+    webServer.server_close()
+    print("Server stopped.")
