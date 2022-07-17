@@ -1,4 +1,5 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from flask import Flask
+from flask import Response
 from io import BytesIO
 from smb.SMBConnection import SMBConnection
 
@@ -14,37 +15,28 @@ server_ip = ''
 
 domain_name = ''
 
+app = Flask(__name__)
 
-class MyServer(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-type", "application/json; charset=UTF-8")
-        self.end_headers()
 
-        conn = SMBConnection(userID, password, client_machine_name, server_name, domain=domain_name, use_ntlm_v2=True,
-                             is_direct_tcp=True)
+@app.route("/")
+def get_json():
 
-        conn.connect(server_ip, 445)
+    conn = SMBConnection(userID, password, client_machine_name, server_name, domain=domain_name, use_ntlm_v2=True,
+                         is_direct_tcp=True)
 
-        temp_file = BytesIO()
+    conn.connect(server_ip, 445)
 
-        conn.retrieveFile(
-            'airvisual', 'latest_config_measurements.json', temp_file)
+    temp_file = BytesIO()
 
-        self.wfile.write(temp_file.getvalue())
+    conn.retrieveFile(
+        'airvisual', 'latest_config_measurements.json', temp_file)
 
-        conn.close()
+    json = temp_file.getvalue()
+
+    conn.close()
+
+    return Response(json, mimetype="application/json; charset=UTF-8")
 
 
 if __name__ == "__main__":
-
-    webServer = HTTPServer((hostName, serverPort), MyServer)
-    print("Server started http://%s:%s" % (hostName, serverPort))
-
-    try:
-        webServer.serve_forever()
-    except KeyboardInterrupt:
-        pass
-
-    webServer.server_close()
-    print("Server stopped.")
+    app.run(host='0.0.0.0', port=8080)
