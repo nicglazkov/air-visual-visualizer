@@ -1,21 +1,26 @@
+import json
 from flask import Flask
 from flask import Response
 from io import BytesIO
 from smb.SMBConnection import SMBConnection
 
+
 hostName = "localhost"
 serverPort = 8080
 
-userID = 'airvisual'
-password = ''
+
 client_machine_name = 'localhost'
-
 server_name = 'AirVisual'
-server_ip = ''
-
 domain_name = ''
 
 app = Flask(__name__)
+
+with open("config.json", "r") as jsonfile:
+    data = json.load(jsonfile)
+
+userID = data["userID"]
+password = data["password"]
+server_ip = data["server_ip"]
 
 
 @app.route("/")
